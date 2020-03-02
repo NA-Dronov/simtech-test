@@ -1,5 +1,6 @@
 <?php
 
+use App\IpProviders\IpProvider;
 use App\JobLog;
 use App\Jobs\{GetIspname, GetFibonacciSequence};
 use App\Misc\TaskStatus;
@@ -27,20 +28,6 @@ if (!function_exists('fibonacci')) {
     }
 }
 
-if (!function_exists('getIpCheckerRequest')) {
-    function getIpCheckerRequest($ip)
-    {
-        $client = new \GuzzleHttp\Client();
-        $request = $client->get("https://http200-ip-checker.herokuapp.com/?json&ipToCheck={$ip}");
-
-        if ($request->getBody()) {
-            $result = json_decode($request->getBody()->getContents());
-        }
-
-        return $result->ispname ?? [];
-    }
-}
-
 if (!function_exists('generateTask')) {
     function generateTask($type = TaskType::ISPNAME, $data)
     {
@@ -48,11 +35,11 @@ if (!function_exists('generateTask')) {
 
         switch ($type) {
             case TaskType::ISPNAME:
-                $ip = $data->ip ?? "";
-                $result = app(\Illuminate\Contracts\Bus\Dispatcher::class)->dispatch((new GetIspname($ip))->delay(10));
+                $ip = $data['ip'] ?? "";
+                $result = app(\Illuminate\Contracts\Bus\Dispatcher::class)->dispatch((new GetIspname(app(IpProvider::class), $ip))->delay(10));
                 break;
             case TaskType::FIBONACCI:
-                $number = $data->int ?? -1;
+                $number = $data['int'] ?? -1;
                 $result = app(\Illuminate\Contracts\Bus\Dispatcher::class)->dispatch((new GetFibonacciSequence($number))->delay(10));
                 break;
         }

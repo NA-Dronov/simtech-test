@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\IpProviders\IpProvider;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -17,15 +18,17 @@ class GetIspname implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private $ip;
+    private $ipProvider;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($ip)
+    public function __construct(IpProvider $ipProvider, string $ip)
     {
         $this->ip = $ip;
+        $this->ipProvider = $ipProvider;
     }
 
     /**
@@ -36,7 +39,7 @@ class GetIspname implements ShouldQueue
     public function handle()
     {
         try {
-            $ispname = getIpCheckerRequest($this->ip);
+            $ispname = $this->ipProvider->getIspName($this->ip);
             $jobLog = JobLog::findOrFail($this->job->getJobId());
             $jobLog->status = TaskStatus::COMPLETED;
             $jobLog->result = json_encode($ispname);

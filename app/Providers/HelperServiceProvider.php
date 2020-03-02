@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\IpProviders\IpProvider;
 use Illuminate\Support\ServiceProvider;
 
 class HelperServiceProvider extends ServiceProvider
@@ -17,6 +18,11 @@ class HelperServiceProvider extends ServiceProvider
         if (file_exists($file)) {
             require_once($file);
         }
+
+        $this->app->singleton('App\IpProviders\IpProvider', function ($app) {
+            $path = 'App\IpProviders\\' . ucfirst(env('IP_URL_PROVIDER'));
+            return new $path();
+        });
     }
 
     /**
