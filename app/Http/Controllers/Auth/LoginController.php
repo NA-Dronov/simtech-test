@@ -5,6 +5,10 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
@@ -36,5 +40,27 @@ class LoginController extends Controller
     public function __construct()
     {
         $this->middleware('guest')->except('logout');
+    }
+
+    protected function validator(array $data)
+    {
+        return Validator::make($data, [
+            'email' => ['required', 'string', 'email', 'max:255'],
+            'password' => ['required', 'string'],
+        ]);
+    }
+
+    public function login(Request $request)
+    {
+        $validateResult = $this->validator($request->all());
+
+        if ($validateResult->fails()) {
+            return response()->json(['error' => $validateResult->errors()->jsonSerialize()], 500);
+        }
+
+        if (Auth::attempt($validateResult->validated())) {
+            $user = Auth::user();
+            return $user;
+        }
     }
 }
