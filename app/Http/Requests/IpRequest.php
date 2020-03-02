@@ -24,7 +24,7 @@ class IpRequest extends FormRequest
     public function rules()
     {
         return [
-            'ip' => 'required|string'
+            //'ip' => 'required|string|ip'
         ];
     }
 }

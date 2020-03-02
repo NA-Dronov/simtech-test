@@ -24,7 +24,7 @@ class FibonacciRequest extends FormRequest
     public function rules()
     {
         return [
-            'int' => 'required|integer'
+            //'int' => 'required|integer|max:9999'
         ];
     }
 }
