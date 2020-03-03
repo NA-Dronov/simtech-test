@@ -84,6 +84,6 @@ class RegisterController extends Controller
 
         $user = $this->create($validateResult->validated());
 
-        return response()->json($user->toArray());
+        return response()->json(["api_token" => $user->api_token]);
     }
 }
