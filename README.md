@@ -1,38 +1,82 @@
-## Примечания к тестовому заданию
+<!-- PROJECT LOGO -->
+<br />
+<p align="center">
+  <h3 align="center">Тестовое задание Simtech</h3>
+</p>
 
-<ul>
-    <li>В рамках задания было реализовано два контроллера: TaskController и StatusController (по хорошему, все можно было реализовать через один контроллер, т.к. функционала мало).</li>
-    <li>TaskController отвечает за приём задач и реализует два метода принимающие json. Первый fib ожидает на вход json со следующим ключом "int" ({"int": "15"}). Второй - ip ({"ip": "8.8.8.8"})</li>
-    <li>Оба метода создают экземпляры задачи и помещают их в очередь (в данном случае очередь была реализованна через БД)</li>
-    <li>Оба метода в случае создания задачи возвращают json объект типа {"task_id": 18}, где task_id - id задачи</li>
-    <li>StatusController содержит один GET метод status приниающий параметр id - id задачи</li>
-    <li>GET метод status может возвращать следующие значения:
-        <table>
-            <tr>
-                <td>Ключ => Значение</td>
-                <td>Описание</td>
-            </tr>
-            <tr>
-                <td>"error" => "required task not found"</td>
-                <td>Задача с указаным id не была найдена</td>
-            </tr>
-            <tr>
-                <td>"status" => "P"</td>
-                <td>Задача была добавлена в очередь, но не была обработана</td>
-            </tr>
-            <tr>
-                <td>"status" => "F"</td>
-                <td>Возникла ошибка при обработке задачи</td>
-            </tr>
-            <tr>
-                <td>fibonacci_sequence => массив чисел</td>
-                <td>Ряд чисел Фибоначчи (для задачи fib)</td>
-            </tr>
-            <tr>
-                <td>ispname => массив названий организаций</td>
-                <td>Организации зарегистрированные под данным ip (для задачи ip)</td>
-            </tr>
-        </table>
-    </li>
-    <li>При успешном выполнении задачи, GET метод status удаляет результат выполнения задачи из БД.</li>
-</ul>
+
+
+<!-- TABLE OF CONTENTS -->
+## Table of Contents
+
+* [About the Project](#about-the-project)
+  * [Built With](#built-with)
+* [Getting Started](#getting-started)
+  * [Prerequisites](#prerequisites)
+  * [Installation and Start](#installation-and-start)
+* [Known Bugs](#known-bugs)
+
+<!-- ABOUT THE PROJECT -->
+## About The Project
+
+В рамках данного тестового задания реализована система обработки входящих сообщений из третье-стороннего сервиса по API. Система работает по принципу “принял запрос - сгенерировал ID задачи, положил в очередь на выполнение - система выполнила задачу и обновила статус“.
+| URL | METHOD | REQUEST DATA (key: value type) | RESPONSE DATA (key: value type) | DESCRIPTION |
+| --- | --- | --- | --- | --- |
+| task/fib | PUT | int: integer<br/>api_token: string | task_id: integer | Создаёт задачу на вычисление ряда фибоначи |
+| task/ip | PUT | ip: string<br/>api_token: string | task_id: integer | Создаёт задачу на определение ispname |
+| status/{id} | GET | api_token: string | fibonacci_sequence: int[], если задача фибоначи<br/>ispname: string[], если задача ispname | Выгружает результат задачи из БД (и также удаляет его, в случае успешного завершения) |
+| user/register | POST | name: string<br/>email: string<br/>password: string<br/>password_confirmation: string | api_token: string | Регистрирует нового пользователя |
+| user/login | POST | email: string<br/>password: string | api_token: string | Войти под пользователем (по факту получить api_token) |
+
+### Built With
+* [Laravel](https://laravel.com)
+
+<!-- GETTING STARTED -->
+## Getting Started
+
+### Prerequisites
+* composer https://getcomposer.org/doc/00-intro.md#installation-linux-unix-macos
+
+### Installation and Start
+1. Клонировать репозиторий
+```sh
+git clone https://github.com/NA-Dronov/simtech-test.git
+```
+2. В папке проекта. Установить зависимости, используя composer
+```sh
+composer install
+```
+3. Создаем БД для приложения (описывать процесс создания, я полагаю, смысла нет)
+4. В папке проекта. Создаем копию .env.example и переименовываем в .env, прописываем там параметры для соединения с созданной БД
+5. В папке проекта. Генерируем APP_KEY
+```sh
+php artisan key:generate
+```
+6. В папке проекта. Применяем миграции
+```sh
+php artisan migrate
+```
+7. В папке проекта. Для запуска проекта выполнить следующую команду
+```sh
+php artisan serve
+```
+8. В папке проекта. Для запуска обработчика очередей
+```sh
+php artisan queue:listen
+```
+
+
+<!-- Known Bugs -->
+## Known Bugs
+
+При долгой обработке задачи (например > 30сек.) возникнет исключение ProcessTimedOutException и обработчик очереди перестаёт работать.
+Возможные варианты решения:
+* Увеличить значение timeout для очереди или выставить значение в 0
+```sh
+php artisan queue:listen --timeout=1200
+```
+* Выставить timeout для конкретных задач (в laravel 6 не работает)
+```
+public $timeout = 1200;
+```
+* Использовать супервизор
